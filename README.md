@@ -103,4 +103,7 @@ For instance, a user with the weight of 6, having submitted 5 tasks recently, co
 ```
 
 ## Testing it out...
-The `pqh_dashboard` hosts a `flower` dashboard monitoring `Celery`. It can be used to keep track of the tasks.
+The `pqh_dashboard` hosts a `flower` dashboard monitoring `Celery`. It can be used to keep track of the tasks on this address:
+```
+localhost:5556
+```
