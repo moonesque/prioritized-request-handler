@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+
+  web:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: web
+    container_name: web
+    ports:
+      - 8001:8000
+    working_dir: /usr/src/app/prioritized_req_handler/
+    command: sanic server.sanic_app --host=0.0.0.0 --port=8000
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_PORT=6379
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: celery worker  -A prioritized_req_handler.tasks -c1 --loglevel=info -Ofair --prefetch-multiplier=1
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - web
+      - redis
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: celery -app prioritized_req_handler.tasks.celery flower --port=5555 --broker=redis://redis:6379
+    ports:
+      - 5556:5555
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - web
+      - redis
+      - worker
+
+  redis:
+    image: redis:6-alpine
