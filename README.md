@@ -38,7 +38,7 @@ The API accepted your task and provided you with the `task_id` and also the `res
 
 If you make a `GET` request to the `/result/<task_id>/` endpoint:
 ```
-curl --location --request GET 'localhost:8000/result/f9028878-3e43-41b8-8a5d-5fe2052fd8f3'
+curl --location --request GET 'localhost:8001/result/f9028878-3e43-41b8-8a5d-5fe2052fd8f3'
 ```
 or simply follow the `result_url`, you can find out about the result of your submitted task. 
 
@@ -74,9 +74,9 @@ We certainly don't want the user who sent the request to wait 60 seconds for the
 `Celery` is used as the task queue and `redis` as its message broker.
 
 ## How is the service fairly allocated to users?
-We dont want users to hog our limited service with their non stop requests, so we need to prioritize some requests over others. For that matter, we need to keep track of the number of requests each user made in some specific time period up until now.
+We don't want users to hog our limited service with their non stop requests, so we need to prioritize some requests over others. For that matter, we need to keep track of the number of requests each user made in some specific time period up until now.
 
-In the current configuration of the project, every time a user submits a tasks (makes a requests), a `redis` key (with their `user_id`, e.g user_2) is updated(incremented). The current value of this key determines the priority that their task will have to the `Celery` worker, the higher the value, the lower the priority. Note that the key has a configurable `TTL`, which allows the records of the users to be cleaned if they stop hogging the service.
+In the current configuration of the project, every time a user submits a task (makes a request), a `redis` key (with their `user_id`, e.g user_2) is updated(incremented). The current value of this key determines the priority that their task will have to the `Celery` worker; The higher the value, the lower the priority. Note that the key has a configurable `TTL`, which allows the records of the users to be cleaned if they stop hogging the service.
 
 ## All the details...
 The priority system consists of 6 levels:
@@ -93,7 +93,7 @@ The priority system consists of 6 levels:
 
 The level 0 has the highest priority and belongs to users who are submitting their first task. These users will have the result of their task ready first, followed by the users who have submitted up to 5 tasks in the last T seconds(level 1), and so on.
 
-Making use of the priority feature of the `Celery` task queue, these levels will map to respective queues that the worker will consume from according to the respective order of priority.
+Making use of the priority feature of the `Celery` task queue, these levels will map to respective queues that the worker will consume from, according to the respective order of priority.
 
 ## Adding weight to the mix...
 An idea for weighted user priority could be assigning a weight integer to each user and __dividing their submitted task number by the weight__. 
